@@ -2,9 +2,11 @@
 
 export  class badRequest extends Error{
 
-   
-    constructor(message){
-       super(message,{cause:400})
+   details;
+    constructor(message,details = []){
+         super(message,{cause:400})
+        this.details = details
+      
     }
 }
 
@@ -40,6 +42,7 @@ export const errorGlobalHandler = (error, req, res, next)=>{
     const status = error.cause || 500
     return res.status(status).json({
         error : error,
+        details : error.details,
         message : error.message,
         stack : error.stack
     })
