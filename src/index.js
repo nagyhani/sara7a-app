@@ -10,6 +10,7 @@ const port = 3000
 
 
 connectDB()
+app.use("/uploads" ,express.static("uploads"))
 app.use(express.json())
 
 app.use("/Auth" , AuthRouter)

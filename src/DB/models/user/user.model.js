@@ -13,7 +13,8 @@ const schema = new Schema({
         return true
     }},
     gender : {type : Number , enum : Object.values(SYS_GENDER) , default: SYS_GENDER.male },
-     role : {type : Number , enum : Object.values(SYS_ROLE) , default: SYS_ROLE.user }
+     role : {type : Number , enum : Object.values(SYS_ROLE) , default: SYS_ROLE.user },
+     profilePic : String
 },{})
 
 export const User = model("User" , schema)

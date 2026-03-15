@@ -13,4 +13,8 @@ export class dbRepository {
     async getOne(filter,projection = {},options = {}){
         return await this.model.findOne(filter,projection,options)
     }
+
+    async updateOne(filter,update,options={}){
+        return await this.model.findOneAndUpdate(filter,update,options)
+    }
 }

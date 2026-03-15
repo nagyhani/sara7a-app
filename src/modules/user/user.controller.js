@@ -1,6 +1,7 @@
 import { Router } from "express"
-import { isAuthenticated } from "../../middlewares/index.js"
-import { decryption, successResponse } from "../../common/index.js"
+import { fileValidation, isAuthenticated } from "../../middlewares/index.js"
+import { decryption, fileUpload, successResponse } from "../../common/index.js"
+import { uploadProfilePic } from "./user.service.js"
 
 const router = Router()
 
@@ -18,6 +19,17 @@ router.get("/" ,isAuthenticated ,  (req,res,next)=>{
        data:{user}
      })
 
+})
+
+router.patch("/upload-profile-picture" ,isAuthenticated,fileUpload().single("image"),fileValidation, async(req,res,next)=>{
+
+ const updatedUser = await uploadProfilePic(req.user,req.file)
+
+  return successResponse({
+       res,
+       message:"profile picture uploaded",
+       data: {updatedUser}
+     })
 })
 
 
