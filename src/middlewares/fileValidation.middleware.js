@@ -4,6 +4,7 @@ import { badRequest } from "../common/index.js";
 
 
 export const fileValidation = async (req, res, next) => {
+    if(!req.file) throw new badRequest("No files uploaded");
     const filePath = req.file.path;
   
     const buffer = fs.readFileSync(filePath);

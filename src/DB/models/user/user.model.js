@@ -16,6 +16,8 @@ const schema = new Schema({
      role : {type : Number , enum : Object.values(SYS_ROLE) , default: SYS_ROLE.user },
      profilePic : String,
      isVerified : {type : Boolean , default: false},
+     profilePic : String,
+     coverPic : [String],
      credentialsUpdatedAt : {type : Date , default : Date.now()},
      numberOfVisits : {type: Number , default: 0}
 },{})

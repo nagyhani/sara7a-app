@@ -13,20 +13,24 @@ let encryptedPhone = null
 if (phoneNumber) {
   encryptedPhone = encryption(phoneNumber)
 }
-
-const conditions = []
-
-if (email){
-   conditions.push({ email })
+if (email) {
+  const emailExist = await checkUserExist({ email })
+  if (emailExist) throw new conflict("User already exists")
 }
-if (encryptedPhone) conditions.push({ phoneNumber: encryptedPhone })
 
-const userExist = await checkUserExist({
-  $or: conditions
-})
+if (phoneNumber) {
+  const usersWithPhones = await userRepository.getAll({
+    phoneNumber: { $exists: true, $ne: null }
+  })
 
-if (userExist) throw new conflict("User already exists")
-  
+  for (const user of usersWithPhones) {
+    const decryptedPhone = decryption(user.phoneNumber)
+
+    if (decryptedPhone === phoneNumber) {
+      throw new conflict("User already exists")
+    }
+  }
+}
    body.role = SYS_ROLE.user
    body.password = await hash(body.password,10)
   
@@ -41,43 +45,61 @@ if (userExist) throw new conflict("User already exists")
 
 
 export const login = async (body)=>{
-  let {email , password , phoneNumber} = body
- let user
+ 
+  const { email, password, phoneNumber } = body
 
- if(email){
-   user = await checkUserExist({email})
-   if(!user?.isVerified) throw new badRequest(" verify account first")
- }
+  let user = null
 
- if(!user && phoneNumber){
+  if (email) {
+    user = await checkUserExist({ email })
 
-   const users = await User.find({ phoneNumber: { $exists: true } })
-   user = users.find(u=>{
-      try{
-        
-         if(!u.phoneNumber) return false
-         return decryption(u.phoneNumber) === phoneNumber
-      }catch{
-         return false
+    if (user && !user.isVerified) {
+      throw new badRequest("verify account first")
+    }
+  }
+  
+ 
+  if (!user && phoneNumber) {
+    const users = await userRepository.getAll({
+      phoneNumber: { $exists: true, $ne: null }
+    })
+
+    user = users.find(u => {
+      try {
+        return u.phoneNumber && decryption(u.phoneNumber) === phoneNumber
+      } catch {
+        return false
       }
-   })
- }
+    })
+  }
 
- if(!user) throw new notFound("invalid credentials")
- const match = await compare(password,user.password)
 
- if(!match) throw new notFound("invalid email or password")
+  if (!user) throw new notFound("invalid credentials")
 
- user.password = undefined
+  
+  const match = await compare(password, user.password)
+  if (!match) throw new notFound("invalid credentials")
 
- if(user.phoneNumber){
-   user.phoneNumber = decryption(user.phoneNumber)
- }
+ 
+  user.password = undefined
 
- const {accessToken,refreshToken} = generateTokes({sub:user._id, role:user.role})
+  if (user.phoneNumber) {
+    try {
+      user.phoneNumber = decryption(user.phoneNumber)
+    } catch {
+      user.phoneNumber = null
+    }
+  }
 
- return  {accessToken , refreshToken}
+  
+  const { accessToken, refreshToken } = generateTokes({
+    sub: user._id,
+    role: user.role
+  })
+
+  return { accessToken, refreshToken }
 }
+
 
 
 export const verifyAccount = async (body)=>{
