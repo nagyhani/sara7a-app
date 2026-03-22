@@ -17,4 +17,16 @@ export class dbRepository {
     async updateOne(filter,update,options={}){
         return await this.model.findOneAndUpdate(filter,update,options)
     }
+
+     async deleteOne(filter){
+        return await this.model.findOneAndDelete(filter)
+    }
+
+         async getAll(filter,projection = {},options={}){
+        return await this.model.find(filter,projection,options)
+    }
+
+      async deleteAll(filter){
+        return await this.model.deleteMany(filter)
+    }
 }

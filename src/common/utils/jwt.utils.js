@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken"
-
+import crypto from "node:crypto"
 const signToken = (payload,secretKey,options = {})=>{
+
+    payload.jti = crypto.randomBytes(10).toString("hex")
 
     return jwt.sign(payload,secretKey,options)
 }

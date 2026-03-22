@@ -14,7 +14,10 @@ const schema = new Schema({
     }},
     gender : {type : Number , enum : Object.values(SYS_GENDER) , default: SYS_GENDER.male },
      role : {type : Number , enum : Object.values(SYS_ROLE) , default: SYS_ROLE.user },
-     profilePic : String
+     profilePic : String,
+     isVerified : {type : Boolean , default: false},
+     credentialsUpdatedAt : {type : Date , default : Date.now()},
+     numberOfVisits : {type: Number , default: 0}
 },{})
 
 export const User = model("User" , schema)

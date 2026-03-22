@@ -28,5 +28,7 @@ export const isValid = (schema)=>{
     password :  joi.string().trim().pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/).messages({"string.pattern.base" : "password must be At least 8 characters long ,Contains at least one uppercase letter,Contains at least one lowercase letter,Contains at least one digit,Contains at least one special character (e.g., @$!%*?&)"}).required(),
     rePassword : joi.string().valid(joi.ref("password")).messages({"any.only" : "rePassword must match password"}),
     gender : joi.number().valid(...Object.values(SYS_GENDER)).default(SYS_GENDER.male),
-    role : joi.number().valid(...Object.values(SYS_ROLE)).default(SYS_ROLE.user)
+    role : joi.number().valid(...Object.values(SYS_ROLE)).default(SYS_ROLE.user),
+    title : joi.string().min(2).trim().pattern(/^.{2,}$/).messages({"string.min" : "length of title must be at least 2 characters long"}), 
+    description : joi.string().min(2).trim().pattern(/^.{2,}$/).messages({"string.min" : "length of description must be at least 2 characters long"})
  }
