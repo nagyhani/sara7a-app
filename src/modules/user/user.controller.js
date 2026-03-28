@@ -2,7 +2,7 @@ import { Router } from "express"
 import { fileValidation, isAuthenticated } from "../../middlewares/index.js"
 import { badRequest, coverPicUpload, profilePicUpload, successResponse } from "../../common/index.js"
 import { deleteProfilePic, deleteUser, getUser, uploadCoverPic, uploadProfilePic } from "./user.service.js"
-import { error } from "node:console"
+
 
 
 const router = Router()

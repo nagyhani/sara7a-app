@@ -15,5 +15,13 @@ export const signupSchema = joi.object({
 export const loginSchema = joi.object({
   email: generalFields.email ,
   password : generalFields.password,
-   phoneNumber : generalFields.phoneNumber
+   phoneNumber : generalFields.phoneNumber,
+   enableTwoStepVerification : generalFields.twoStepVerify
 }).or("email" , "phoneNumber").messages({"object.missing" : "at least email or phoneNumber required"}).required()
+
+
+
+export const updatePasswordSchema = joi.object({
+  password : generalFields.password,
+}).required()
+

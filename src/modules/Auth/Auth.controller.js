@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {  generateTokes, successResponse, verifyToken } from "../../common/index.js";
-import { login, logout, logOutFromAllDevices, sendOTP, signUp, verifyAccount } from "./Auth.service.js";
-import { loginSchema, signupSchema } from "./Auth.validation.js";
+import { forgotPassword, forgotPasswordOTP, login, logout, logOutFromAllDevices, resetPassword, sendOTP, signUp, twoStepSendOTP, twoStepVerification, updatePassword, verifyAccount } from "./Auth.service.js";
+import { loginSchema, signupSchema, updatePasswordSchema } from "./Auth.validation.js";
 import { isValid } from "../../middlewares/validation.middlewares.js";
 import { isAuthenticated } from "../../middlewares/index.js";
 
@@ -33,6 +33,19 @@ router.post("/login",isValid(loginSchema), async (req,res,next)=>{
 
 })
 
+
+router.patch("/update-password" ,isAuthenticated ,isValid(updatePasswordSchema), async (req,res,next)=>{
+
+     const updatedUser = await updatePassword(req.body , req.user)
+
+       return successResponse({
+       res,
+       message:"done",
+       data:{updatedUser}
+     })
+
+})
+
 router.get("/refresh-token" ,(req,res,next)=>{
   const {authorization} = req.headers
 
@@ -50,6 +63,69 @@ router.get("/refresh-token" ,(req,res,next)=>{
  })
 })
 
+router.post("/forgot-password-OTP",isAuthenticated, async (req,res,next)=>{
+
+  await forgotPasswordOTP(req.body)
+
+   return  successResponse({
+   res,
+   message:"OTP sent successfully to your email",
+ })
+
+})
+
+router.patch("/forgot-password" ,isAuthenticated , async (req,res,next)=>{
+   await forgotPassword(req.body,req.user)
+
+   return successResponse({
+   res,
+   message:"done",
+ })
+})
+
+router.patch("/reset-password" , isAuthenticated , isValid(updatePasswordSchema) , async (req,res,next)=>{
+
+ await resetPassword(req.body,req.user)
+
+ 
+   return successResponse({
+   res,
+   message:"password updated successfully",
+ })
+
+
+})
+
+
+router.patch("/verify-account" , async (req,res,next)=>{
+
+  await verifyAccount(req.body)
+
+  return successResponse({
+   res,
+   message:"Account verified successfully",
+ })
+})
+
+router.patch("/2-step-verification-OTP" , async (req,res,next)=>{
+ await twoStepSendOTP(req.body)
+
+    return  successResponse({
+   res,
+   message:"OTP sent successfully to your email",
+ })
+})
+
+
+router.patch("/2-step-verification" , async (req,res,next)=>{
+
+  await twoStepVerification(req.body)
+
+  return successResponse({
+   res,
+   message:"2-step-verification activated successfully",
+ })
+})
 
 router.patch("/verify-account" , async (req,res,next)=>{
 
@@ -62,14 +138,14 @@ router.patch("/verify-account" , async (req,res,next)=>{
  })
 })
 
+
 router.post("/send-otp" ,async (req,res,next)=>{
 
   await sendOTP(req.body)
 
-   return successResponse({
+   return  successResponse({
    res,
-   message:"OTP sent successfully",
-   
+   message:"OTP sent successfully to your email",
  })
   
 })

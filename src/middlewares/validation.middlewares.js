@@ -30,5 +30,6 @@ export const isValid = (schema)=>{
     gender : joi.number().valid(...Object.values(SYS_GENDER)).default(SYS_GENDER.male),
     role : joi.number().valid(...Object.values(SYS_ROLE)).default(SYS_ROLE.user),
     title : joi.string().min(2).trim().pattern(/^.{2,}$/).messages({"string.min" : "length of title must be at least 2 characters long"}), 
-    description : joi.string().min(2).trim().pattern(/^.{2,}$/).messages({"string.min" : "length of description must be at least 2 characters long"})
+    description : joi.string().min(2).trim().pattern(/^.{2,}$/).messages({"string.min" : "length of description must be at least 2 characters long"}),
+    twoStepVerify : joi.boolean()
  }

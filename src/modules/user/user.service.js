@@ -1,4 +1,4 @@
-import { badRequest, decryption, notFound } from "../../common/index.js";
+import { badRequest, compare, decryption, notFound } from "../../common/index.js";
 import { userRepository } from "../../DB/index.js"
 import  fs  from 'node:fs';
 
@@ -22,9 +22,7 @@ export const getUser = async (user)=>{
   return userExist
 }
 
-export const updateUser = async (filter,update)=>{
-  return await userRepository.updateOne(filter,update)
-}
+
 
 export const uploadProfilePic = async (user,file)=>{
  const updatedUser =  await userRepository.updateOne({_id:user._id},{profilePic:file.path},{new:true})

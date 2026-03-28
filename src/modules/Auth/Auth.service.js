@@ -1,6 +1,6 @@
+
 import { badRequest, compare, conflict, decryption, encryption, generateTokes, hash, notFound, sendEmail, SYS_ROLE } from "../../common/index.js"
 import { otpRepository, tokenRepository, userRepository } from "../../DB/index.js"
-import { User } from "../../DB/models/user/user.model.js"
 import { checkUserExist } from "../user/user.service.js"
 
 
@@ -46,7 +46,7 @@ if (phoneNumber) {
 
 export const login = async (body)=>{
  
-  const { email, password, phoneNumber } = body
+  const { email, password, phoneNumber, enableTwoStepVerification } = body
 
   let user = null
 
@@ -73,12 +73,31 @@ export const login = async (body)=>{
     })
   }
 
-
   if (!user) throw new notFound("invalid credentials")
 
-  
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+
+     throw new badRequest("too many attempts, try after 5 minutes")
+}
+
+if (user.lockUntil && user.lockUntil <= Date.now()) {
+  user.numberOfTries = 0;
+  user.lockUntil = null;
+  await user.save();
+}
   const match = await compare(password, user.password)
-  if (!match) throw new notFound("invalid credentials")
+
+  if (!match){
+    user.numberOfTries += 1
+    if(user.numberOfTries >= 5){
+       user.lockUntil = new Date(Date.now() + 5 * 60 * 1000)
+       user.save()
+      throw new badRequest("too many attempts, try after 5 minutes")
+    }
+     await user.save();
+    throw new notFound("invalid credentials")
+   
+  }
 
  
   user.password = undefined
@@ -97,9 +116,91 @@ export const login = async (body)=>{
     role: user.role
   })
 
+  if(enableTwoStepVerification) {
+    await userRepository.updateOne({email},{enableTwoStepVerification :true})
+    await twoStepSendOTP(body)
+  }
+
   return { accessToken, refreshToken }
 }
 
+
+export const updatePassword = async (body,user)=>{
+
+  const {password} = body
+
+  const match = await compare(password, user.password)
+
+  if(match) throw new badRequest ("you entered the same password")
+
+   const newHashedPassword =  await hash(password,10)
+
+   const updatedUser =  await userRepository.updateOne({email : user.email} , {password : newHashedPassword})
+
+    return updatedUser
+}
+
+
+export const forgotPasswordOTP = async (body)=>{
+
+  const {email} = body
+
+ const otpDocument =  await otpRepository.getOne({email})
+
+ if(otpDocument) throw new badRequest("can't send otp, your otp still valid")
+
+  const verifiedUser = await userRepository.getOne({email,forgotPassword : true})
+
+  if(verifiedUser) throw new badRequest("otp sent??!!")
+
+  const OTP =  Math.floor(100000 +Math.random() * 900000)
+
+   await otpRepository.create({OTP,email, expiresAt : Date.now() + 5 *60 * 1000})
+
+   await sendEmail({to : email , subject : "verify your account" , html: `OTP to verify your account is ${OTP}`})
+  
+}
+
+export const forgotPassword = async(body)=>{
+  const {email,OTP} = body
+
+ const otpDocument = await otpRepository.getOne({email})
+
+ if(!otpDocument) throw new badRequest("expired OTP!")
+
+  if(OTP != otpDocument.OTP) {
+
+    otpDocument.attempts += 1
+
+     if(otpDocument.attempts > 3) {
+
+     await otpRepository.deleteOne({_id : otpDocument._id})
+    
+    throw new badRequest("too many tries")
+   }
+   await otpDocument.save() 
+
+  
+    throw new badRequest("invalid OTP!")
+  }
+    await userRepository.updateOne({email},{forgotPassword:true})
+
+    return true
+}
+
+export const resetPassword = async (body,user)=>{
+
+  const {email} = user
+
+  const match = await userRepository.getOne({forgotPassword : true})
+
+  if(!match) throw new badRequest("you need an OTP to update your password")
+
+   await updatePassword(body,user)
+   await userRepository.updateOne({email},{forgotPassword:false})
+
+   return true
+}
 
 
 export const verifyAccount = async (body)=>{
@@ -134,6 +235,7 @@ export const verifyAccount = async (body)=>{
     return true
 }
 
+
 export async function sendOTP(body){
 
   const {email} = body
@@ -153,6 +255,59 @@ export async function sendOTP(body){
    await sendEmail({to : email , subject : "verify your account" , html: `OTP to verify your account is ${OTP}`})
   
 
+}
+
+
+export async function twoStepSendOTP(body){
+
+  const {email} = body
+
+ const otpDocument =  await otpRepository.getOne({email})
+
+ if(otpDocument) throw new badRequest("can't send otp, your otp still valid")
+
+  const verifiedUser = await userRepository.getOne({email,isVerified : true})
+
+  if(!verifiedUser) throw new badRequest("verify email first")
+
+  const verificationStep = await userRepository.getOne({email,twoStepVerification : true})
+
+  if(verificationStep) throw new badRequest("2 step verification already activated")
+
+  const OTP =  Math.floor(100000 +Math.random() * 900000)
+
+   await otpRepository.create({OTP,email, expiresAt : Date.now() + 5 *60 * 1000})
+
+   await sendEmail({to : email , subject : "verify your account" , html: `OTP to verify your account is ${OTP}`})
+}
+
+export const twoStepVerification = async (body)=>{
+  const {email,OTP} = body
+
+ const otpDocument = await otpRepository.getOne({email})
+
+ if(!otpDocument) throw new badRequest("expired OTP!")
+
+  if(OTP != otpDocument.OTP) {
+
+    otpDocument.attempts += 1
+
+     if(otpDocument.attempts > 3) {
+
+     await otpRepository.deleteOne({_id : otpDocument._id})
+    
+    throw new badRequest("too many tries")
+   }
+   await otpDocument.save() 
+
+  
+    throw new badRequest("invalid OTP!")
+  }
+    await userRepository.updateOne({email},{twoStepVerification:true})
+
+    await otpRepository.deleteOne({_id : otpDocument._id})
+
+    return true
 }
 
 
