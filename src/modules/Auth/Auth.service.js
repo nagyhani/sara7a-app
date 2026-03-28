@@ -39,6 +39,8 @@ if (phoneNumber) {
    }
 
    if (email) await sendOTP({email})
+
+    body.expiresAt = Date.now() + 5 *60 * 60 * 1000
    
   return await userRepository.create(body)
 }
@@ -228,7 +230,7 @@ export const verifyAccount = async (body)=>{
 
     
 
-    await userRepository.updateOne({email},{isVerified:true})
+    await userRepository.updateOne({email},{isVerified:true,expiresAt:null})
 
     await otpRepository.deleteOne({_id : otpDocument._id})
 

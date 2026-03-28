@@ -39,6 +39,8 @@ const schema = new Schema({
      enableTwoStepVerification : {type : Boolean , default: false},
 
      forgotPassword : {type : Boolean , default: false},
+
+      expiresAt : {type : Date ,index : {expires : 0}},
      
      lockUntil: Date
 
